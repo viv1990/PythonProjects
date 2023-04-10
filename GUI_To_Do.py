@@ -11,8 +11,13 @@ ListBox1= ps.Listbox(values=ff.get_todos(),enable_events=True,size=(44,10),key="
 EditButton=ps.Button("Edit")
 ExitButton=ps.Button("Exit")
 DeleteButton=ps.Button("Delete")
+
+Buttons_List=[[DeleteButton]]
+Buttons_List1=[[ExitButton]]
+
+
 window=ps.Window("To-Do Application",
-                 layout=[[Lable1],[InputText1,AddButton],[ListBox1,EditButton],[DeleteButton],[ExitButton]],
+                 layout=[[Lable1],[InputText1,AddButton],[ListBox1,EditButton],[ps.Column([[DeleteButton]]),ps.Column([[ExitButton]])]],
                  size=(800,500),
                  font=("Helvetica",20))
 
