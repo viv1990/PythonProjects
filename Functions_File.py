@@ -5,13 +5,13 @@ ANything outside the functions ;like print("hello") here in this program will ge
 file is imported in main.py
 '''
 
-def get_todos():
-    with open("Files/Todos.txt", 'r') as file:
+def get_todos(file):
+    with open(file, 'r') as file:
         todos_local = file.readlines()
         return todos_local
 
 def write_todos(todos_wlocal):
-    with open("Files/Todos.txt", 'w') as file:
+    with open("Todos.txt", 'w') as file:
         file.writelines(todos_wlocal)
 
 def show_list(todos):
