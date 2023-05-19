@@ -2,9 +2,12 @@ i=0
 List1=[]
 
 A=input("Enter a 4 digit binary number separated by comma")
+print(A)
 A.strip()
+print(A)
 B=A.split(',')
-
+print(B)
+print(type(B))
 for item in B:
     if item.isnumeric()==True:
         if(len(item)==4):
