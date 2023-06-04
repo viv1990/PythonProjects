@@ -14,7 +14,7 @@ api_token=os.environ.get('API')
 
 counter=1
 jiradf_backup=None
-jira = JIRA(server='https://jiratickettrial.atlassian.net/', basic_auth=('er.viveksoni90@gmail.com', api_token))
+jira = JIRA(server='https://jiratickettrial.atlassian.net/', basic_auth=('pythonlover260@gmail.com', api_token))
 
 def generate_unique_ids(num_ids):
     return [str(shortuuid.uuid()) for _ in range(num_ids)]
@@ -168,7 +168,7 @@ def jirafile(masterdf,merged_df_issue_list):
 def jiraticket(jiradf,master_df):
     global sheet_name
     Prefix1='Additional Details are'
-    issue_metadata = jira.createmeta(projectKeys='JIR')
+    issue_metadata = jira.createmeta(projectKeys='JIRA')
     priority_mapping = {
     'Highest':'Highest',
     'High': 'High',

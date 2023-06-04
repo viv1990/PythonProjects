@@ -7,8 +7,7 @@ import os
 api_token=os.environ.get('API')
 counter=1
 jiradf_backup=None
-jira = JIRA(server='https://jiratickettrial.atlassian.net/', basic_auth=('er.viveksoni90@gmail.com', api_token))
-
+jira = JIRA(server='https://ticketingjiratool.atlassian.net/', basic_auth=('pythonlover976@gmail.com', api_token))
 app=Flask("Jira Ticketing APP")
 
 @app.route('/', methods=['GET', 'POST'])
@@ -19,6 +18,7 @@ def index():
     if request.method == 'POST':
         file = request.files['file']
         file_path=os.path.join(os.getcwd(),file.filename)
+        file.save(file_path)
 
         # except IOError:
         #     return render_template('closefile.html')
