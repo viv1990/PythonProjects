@@ -23,7 +23,8 @@ def generate_unique_ids(num_ids):
     return [str(shortuuid.uuid()) for _ in range(num_ids)]
 
 def preserve(file,jiradf_backup):
-    workbook = load_workbook(file)
+    excel_file = file
+    workbook = load_workbook(excel_file)
     consolidated_sheet = 'ConsolidatedSheet'
     week_sheetname = [sheet for sheet in workbook.sheetnames if sheet != consolidated_sheet and sheet.startswith('Week')]
     jiraticketdata=[sheet for sheet in workbook.sheetnames if sheet.startswith('JiraTicketData')]
@@ -31,10 +32,10 @@ def preserve(file,jiradf_backup):
 
     for sheet in workbook.sheetnames:
         if sheet not in [consolidated_sheet]+week_sheetname+jiraticketdata:
-            sheet_df=pd.read_excel(file,sheet_name=sheet)
+            sheet_df=pd.read_excel(excel_file,sheet_name=sheet)
             other_sheet_df[sheet]=sheet_df
         if (jiraticketdata) and (jiradf_backup is None):
-            jiradf_backup=pd.read_excel(file,sheet_name=jiraticketdata[0])
+            jiradf_backup=pd.read_excel(excel_file,sheet_name=jiraticketdata[0])
     return other_sheet_df,jiradf_backup
 def reload_dataframe(file):
     global df1,df2  # Declare df as a global variable
@@ -164,12 +165,16 @@ def jirafile(file_path,master_df,merged_df_issue_list,jiradf_backup,other_sheet_
         jiradf.reset_index(drop=True, inplace=True)  # Reset the index to preserve the original unique IDs
 
     if len(filtered_list)==0:
+        print("Length of filtered list is 0")
+        print(jiradf_backup.head(50))
         jiradf=jiradf_backup.copy()
-
+        print(jiradf.head(50))
 
     try:
         with pd.ExcelWriter(file_path) as writer:
             if jiradf is not None:
+                print("Jiradf is not none")
+                print("Inside Writer",jiradf.head(50))
                 jiradf.to_excel(writer,sheet_name=sheet_name,index=False)
                 master_df.to_excel(writer,sheet_name='ConsolidatedSheet',index=False)
 
@@ -197,6 +202,13 @@ def jirafile(file_path,master_df,merged_df_issue_list,jiradf_backup,other_sheet_
 def jiraticket(sheet_name,jiradf,master_df,other_sheet_df):
     Prefix1='Additional Details are'
     issue_metadata = jira.createmeta(projectKeys='JIR')
+    print(issue_metadata['projects'][0]['key'])
+    priority_mapping = {
+    'Highest':'Highest',
+    'High': 'High',
+    'Low':'Low',
+    'Lowest':'Lowest'
+    }
 
     for index,row in jiradf.iterrows():
         issue_identifier = row['IssueID']
@@ -216,13 +228,16 @@ def jiraticket(sheet_name,jiradf,master_df,other_sheet_df):
             Env = row['Environment'].split(',')
             table_data=[['IPAddress','SystemName','Platform','OSName','Environment']]+list(zip(ip_addresses,system_names,platform,OSname,Env))
             table = tabulate.tabulate(table_data, headers='firstrow', tablefmt='pipe')
+            #duedate_dt = pd.to_datetime(duedate_str, format='%Y-%m-%d').to_pydatetime()
+            #print(duedate_dt)
             issue_data = {
                 'project': issue_metadata['projects'][0]['key'],
                 'summary': row['Vulnerabilityfound'],
                 'description': '{}\n{}'.format(Prefix1,table),
                 'issuetype':{'name':'Task'},
+                #'duedate':duedate_dt.isoformat(),
                 'assignee': row['Assigned'],
-
+                #'priority':{'name':priority_data}
                 }
 
             issue=jira.create_issue(**issue_data)
@@ -236,6 +251,8 @@ def jiraticket(sheet_name,jiradf,master_df,other_sheet_df):
             ticket_id = row['TicketID']
             master_df.loc[master_df['IssueID'].isin(issue_list), 'TicketID'] = ticket_id
 
+    print(jiradf.head(50))
+
     while True:
         try:
             with pd.ExcelWriter('Jira.xlsx') as writer:
@@ -247,44 +264,6 @@ def jiraticket(sheet_name,jiradf,master_df,other_sheet_df):
         except PermissionError:
             print("Please close the file to proceed")
             time.sleep(5)
-
-def jirastatus(file):
-    master_df=pd.read_excel(file, sheet_name="ConsolidatedSheet")
-
-    for index,row in master_df.iterrows():
-        try:
-            TicketID=row['TicketID']
-            if not pd.isnull(TicketID):
-                try:
-                    issue = jira.issue(TicketID)
-                    status = issue.fields.status.name
-                    master_df.at[index,'TicketStatus']=status
-                    print(master_df.head(50))
-                except Exception as e:
-                    print("Error retrieving status")
-        except KeyError:
-            return("There is no TicketID issued to each issue")
-
-    wb=load_workbook(file)
-    consolidated_sheet = 'ConsolidatedSheet'
-    other_sheet_df={}
-    for sheet in wb.sheetnames:
-        if sheet not in consolidated_sheet:
-            sheet_df = pd.read_excel(file, sheet_name=sheet)
-            other_sheet_df[sheet] = sheet_df
-    try:
-        with pd.ExcelWriter(file.filename) as writer:
-            master_df.to_excel(writer, sheet_name='ConsolidatedSheet', index=False)
-            print("Final sheet",master_df.head(50))
-            for sheet, sheet_df in other_sheet_df.items():
-                sheet_df.to_excel(writer, sheet_name=sheet, index=False)
-        return ("Status were successfully updated")
-
-    except PermissionError:
-        print("Please close the file to proceed")
-        time.sleep(5)
-
-
 
 
 # message,df1,df2= reload_dataframe('Jira.xlsx')
